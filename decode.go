@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/vmihailenco/msgpack/codes"
+	"github.com/alfatm/msgpack/codes"
 )
 
 const bytesAllocLimit = 1024 * 1024 // 1mb
@@ -44,8 +44,9 @@ type Decoder struct {
 	extLen int
 	rec    []byte // accumulates read data if not nil
 
-	useLoose   bool
-	useJSONTag bool
+	useLoose              bool
+	useJSONTag            bool
+	disallowUnknownFields bool
 
 	decodeMapFunc func(*Decoder) (interface{}, error)
 }
@@ -78,6 +79,14 @@ func (d *Decoder) UseDecodeInterfaceLoose(flag bool) *Decoder {
 // if there is no msgpack tag.
 func (d *Decoder) UseJSONTag(v bool) *Decoder {
 	d.useJSONTag = v
+	return d
+}
+
+// DisallowUnknownFields causes the Decoder to return an error when the destination
+// is a struct and the input contains object keys which do not match any
+// non-ignored, exported fields in the destination.
+func (d *Decoder) DisallowUnknownFields(v bool) *Decoder {
+	d.disallowUnknownFields = v
 	return d
 }
 

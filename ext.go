@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/vmihailenco/msgpack/codes"
+	"github.com/alfatm/msgpack/codes"
 )
 
 type extInfo struct {

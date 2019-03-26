@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	. "gopkg.in/check.v1"
 
-	"github.com/vmihailenco/msgpack"
+	"github.com/alfatm/msgpack"
 )
 
 type nameStruct struct {
@@ -271,4 +272,47 @@ func (t *MsgpackTest) TestMapStringInterface(c *C) {
 	c.Assert(out["foo"], Equals, "bar")
 	mm := out["hello"].(map[string]interface{})
 	c.Assert(mm["foo"], Equals, "bar")
+}
+
+//------------------------------------------------------------------------------
+
+func TestDisallowUnknownFields(t *testing.T) {
+	type Base struct {
+		FooOne   string
+		FooTwo   string
+		FooThree string
+	}
+
+	type Derived struct {
+		FooOne string
+		// FooTwo string // field missed
+		FooThree string // exist
+	}
+
+	base := &Base{
+		FooOne:   "barOne",
+		FooTwo:   "barTwo",
+		FooThree: "barThree",
+	}
+
+	var buf bytes.Buffer
+	enc := msgpack.NewEncoder(&buf)
+	err := enc.Encode(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	derived := &Derived{}
+	dec := msgpack.NewDecoder(bytes.NewReader(buf.Bytes()))
+	dec = dec.DisallowUnknownFields(true)
+	err = dec.Decode(&derived)
+	if err == nil {
+		t.Fatalf("expecting error")
+	}
+
+	if !strings.HasPrefix(err.Error(), "msgpack: unknown field") {
+		t.Fatalf("unexpected error")
+	}
+
+	t.Logf("correct error %q", err)
 }

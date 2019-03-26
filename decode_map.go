@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/vmihailenco/msgpack/codes"
+	"github.com/alfatm/msgpack/codes"
 )
 
 const mapElemsAllocLimit = 1e4
@@ -329,6 +329,9 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 				return err
 			}
 		} else {
+			if d.disallowUnknownFields {
+				return fmt.Errorf("msgpack: unknown field %q of struct %#+v", name, v)
+			}
 			if err := d.Skip(); err != nil {
 				return err
 			}

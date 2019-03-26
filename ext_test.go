@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmihailenco/msgpack"
-	"github.com/vmihailenco/msgpack/codes"
+	"github.com/alfatm/msgpack"
+	"github.com/alfatm/msgpack/codes"
 )
 
 func init() {

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmihailenco/msgpack"
+	"github.com/alfatm/msgpack"
 )
 
 func BenchmarkDiscard(b *testing.B) {
@@ -220,7 +220,7 @@ func structForBenchmark2() *benchmarkStruct2 {
 	}
 }
 
-func BenchmarkStructVmihailencoMsgpack(b *testing.B) {
+func BenchmarkStructalfatmMsgpack(b *testing.B) {
 	in := structForBenchmark()
 	out := new(benchmarkStruct)
 
