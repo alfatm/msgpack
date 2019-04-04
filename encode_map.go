@@ -1,6 +1,7 @@
 package msgpack
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 
@@ -38,8 +39,8 @@ type genericSort []reflect.Value
 func (a genericSort) Len() int      { return len(a) }
 func (a genericSort) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a genericSort) Less(i, j int) bool {
-	iV := a[i]
-	jV := a[j]
+	iV := reflect.Indirect(a[i])
+	jV := reflect.Indirect(a[j])
 	iK := iV.Kind()
 	jK := jV.Kind()
 
@@ -48,21 +49,18 @@ func (a genericSort) Less(i, j int) bool {
 		if jK == reflect.String {
 			return iV.String() < jV.String()
 		}
-		return false
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		switch jK {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return iV.Int() < jV.Int()
 		}
-		return false
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		switch jK {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			return iV.Uint() < jV.Uint()
 		}
-		return false
 
 	case reflect.Float32, reflect.Float64:
 		switch jK {
@@ -70,10 +68,9 @@ func (a genericSort) Less(i, j int) bool {
 			return iV.Float() < jV.Float()
 
 		}
-		return false
 	}
 
-	return false
+	return fmt.Sprintf("%v", iV.Interface()) < fmt.Sprintf("%v", jV.Interface())
 }
 
 func encodeMapStringStringValue(e *Encoder, v reflect.Value) error {
