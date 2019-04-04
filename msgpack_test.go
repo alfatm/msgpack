@@ -3,6 +3,8 @@ package msgpack_test
 import (
 	"bufio"
 	"bytes"
+	"crypto/md5"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -315,4 +317,103 @@ func TestDisallowUnknownFields(t *testing.T) {
 	}
 
 	t.Logf("correct error %q", err)
+}
+
+//------------------------------------------------------------------------------
+
+func TestSortMapKeys(t *testing.T) {
+	type Foo struct {
+		Bar string
+	}
+
+	// map int by pointer
+	{
+		mapIntPFoo := map[int]*Foo{
+			5:      &Foo{Bar: "five"},
+			3:      &Foo{Bar: "three"},
+			100500: &Foo{Bar: "a lot"},
+			42:     &Foo{Bar: "meaning of live"},
+		}
+
+		var buf bytes.Buffer
+		enc := msgpack.NewEncoder(&buf)
+		enc = enc.SortMapKeys(true)
+		err := enc.Encode(&mapIntPFoo)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mapIntPFooMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
+		t.Logf("map[int]*Foo got md5 value: %q\n", mapIntPFooMd5)
+
+		// must be consisten on every encoding
+		if mapIntPFooMd5 != "7e252d542e3f72b82f9ee84dfd150f90" {
+			t.Fatalf("map[int]*Foo inconsistent encoding, sample not match")
+		}
+
+		// decode
+		var decMap map[int]Foo
+		dec := msgpack.NewDecoder(bytes.NewReader(buf.Bytes()))
+		err = dec.Decode(&decMap)
+		if err != nil {
+			t.Fatalf("decode sorted map failed")
+		}
+
+		if len(decMap) == 0 {
+			t.Fatalf("unable decode sorted map")
+		}
+		t.Logf("decoded result %#+v", decMap)
+	}
+
+	// map int64 by value
+	{
+		mapInt64Foo := map[int64]Foo{
+			5:      Foo{Bar: "five"},
+			42:     Foo{Bar: "meaning of live"},
+			100500: Foo{Bar: "a lot"},
+			3:      Foo{Bar: "three"},
+		}
+
+		var buf bytes.Buffer
+		enc := msgpack.NewEncoder(&buf)
+		enc = enc.SortMapKeys(true)
+		err := enc.Encode(&mapInt64Foo)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mapInt64FooMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
+		t.Logf("map[int64]Foo got md5 value: %q\n", mapInt64FooMd5)
+
+		// must be consisten on every encoding
+		if mapInt64FooMd5 != "7e252d542e3f72b82f9ee84dfd150f90" {
+			t.Fatalf("map[int64]Foo inconsistent encoding, sample not match")
+		}
+	}
+
+	// mixed keys
+	{
+		mapII := map[interface{}]interface{}{
+			42:    "meaning of live",
+			"foo": "bar",
+			3.14:  "pi",
+		}
+
+		var buf bytes.Buffer
+		enc := msgpack.NewEncoder(&buf)
+		enc = enc.SortMapKeys(true)
+		err := enc.Encode(&mapII)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mapIIMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
+		t.Logf("map[int64]Foo got md5 value: %q\n", mapIIMd5)
+
+		// must be consisten on every encoding
+		if mapIIMd5 != "a55c77635635645bd8deac3ea357a4b6" {
+			t.Fatalf("map[interface{}]interface{} inconsistent encoding, sample not match")
+		}
+	}
+
 }
