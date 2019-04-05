@@ -1,11 +1,11 @@
 package msgpack
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/alfatm/msgpack/codes"
+	"github.com/pkg/errors"
 )
 
 const mapElemsAllocLimit = 1e4
