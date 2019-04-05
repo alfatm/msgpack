@@ -308,7 +308,7 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 				break
 			}
 			if err := f.DecodeValue(d, v); err != nil {
-				return err
+				return errorx.Decorate(err, "msgpack: unable decode struct `%+v`", v)
 			}
 		}
 		// Skip extra values.
@@ -323,15 +323,15 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 	for i := 0; i < n; i++ {
 		name, err := d.DecodeString()
 		if err != nil {
-			return err
+			return errorx.Decorate(err, "msgpack: unable decode struct name `%+v`", v)
 		}
 		if f := fields.Table[name]; f != nil {
 			if err := f.DecodeValue(d, v); err != nil {
-				return err
+				return errorx.Decorate(err, "msgpack: unable decode struct field `%v` value, `%+v`", name, v)
 			}
 		} else {
 			if d.disallowUnknownFields {
-				return fmt.Errorf("msgpack: unknown field %q of struct %#+v", name, v)
+				return errorx.IllegalFormat.New("msgpack: unknown field `%v` of struct %#+v", name, v)
 			}
 			if err := d.Skip(); err != nil {
 				return err
