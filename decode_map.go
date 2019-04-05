@@ -48,12 +48,12 @@ func decodeMapValueSize(d *Decoder, v reflect.Value, size int) error {
 	for i := 0; i < size; i++ {
 		mk := reflect.New(keyType).Elem()
 		if err := d.DecodeValue(mk); err != nil {
-			return err
+			return errors.Wrap(err, "msgpack:  unable decode map key")
 		}
 
 		mv := reflect.New(valueType).Elem()
 		if err := d.DecodeValue(mv); err != nil {
-			return err
+			return errors.Wrap(err, "msgpack: unable decode map field `%v`", mk)
 		}
 
 		v.SetMapIndex(mk, mv)
