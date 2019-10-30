@@ -322,18 +322,18 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 	for i := 0; i < n; i++ {
 		name, err := d.DecodeString()
 		if err != nil {
-			return err
+			return zerror.Decorate(err, "unable decode struct field name (%+v)", v)
 		}
 		if f := fields.Table[name]; f != nil {
 			if err := f.DecodeValue(d, v); err != nil {
-				return err
+				return zerror.Decorate(err, "unable decode struct field `%v` value (%+v)", name, f.value(v))
 			}
 		} else {
 			if d.disallowUnknownFields {
 				return zerror.NewError("msgpack: unknown field %q of struct %#+v", name, v)
 			}
 			if err := d.Skip(); err != nil {
-				return err
+				return zerror.Decorate(err, "unable scip field %v", name)
 			}
 		}
 	}
