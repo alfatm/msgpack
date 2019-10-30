@@ -2,7 +2,7 @@ module github.com/alfatm/msgpack/v4
 
 require (
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/vmihailenco/msgpack/v4 v4.0.0-00010101000000-000000000000
+	github.com/vmihailenco/msgpack/v4 v4.2.1
 	github.com/vmihailenco/tagparser v0.1.0
 	gitlab.msoft.io/hub/zerror v1.1.1
 	google.golang.org/appengine v1.6.1
