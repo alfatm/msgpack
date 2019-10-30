@@ -1,12 +1,14 @@
 package msgpack
 
 import (
-	"fmt"
 	"reflect"
+
+	"gitlab.msoft.io/hub/zerror"
 )
 
 var valueEncoders []encoderFunc
 
+//nolint:gochecknoinits
 func init() {
 	valueEncoders = []encoderFunc{
 		reflect.Bool:          encodeBoolValue,
@@ -38,10 +40,15 @@ func init() {
 }
 
 func getEncoder(typ reflect.Type) encoderFunc {
-	if encoder, ok := typEncMap[typ]; ok {
-		return encoder
+	if v, ok := typeEncMap.Load(typ); ok {
+		return v.(encoderFunc)
 	}
+	fn := _getEncoder(typ)
+	typeEncMap.Store(typ, fn)
+	return fn
+}
 
+func _getEncoder(typ reflect.Type) encoderFunc {
 	if typ.Implements(customEncoderType) {
 		return encodeCustomValue
 	}
@@ -70,8 +77,12 @@ func getEncoder(typ reflect.Type) encoderFunc {
 	case reflect.Ptr:
 		return ptrEncoderFunc(typ)
 	case reflect.Slice:
-		if typ.Elem().Kind() == reflect.Uint8 {
+		elem := typ.Elem()
+		if elem.Kind() == reflect.Uint8 {
 			return encodeByteSliceValue
+		}
+		if elem == stringType {
+			return encodeStringSliceValue
 		}
 	case reflect.Array:
 		if typ.Elem().Kind() == reflect.Uint8 {
@@ -102,7 +113,7 @@ func ptrEncoderFunc(typ reflect.Type) encoderFunc {
 
 func encodeCustomValuePtr(e *Encoder, v reflect.Value) error {
 	if !v.CanAddr() {
-		return fmt.Errorf("msgpack: Encode(non-addressable %T)", v.Interface())
+		return zerror.NewError("msgpack: Encode(non-addressable %T)", v.Interface())
 	}
 	encoder := v.Addr().Interface().(CustomEncoder)
 	return encoder.EncodeMsgpack(e)
@@ -122,7 +133,7 @@ func encodeCustomValue(e *Encoder, v reflect.Value) error {
 
 func marshalValuePtr(e *Encoder, v reflect.Value) error {
 	if !v.CanAddr() {
-		return fmt.Errorf("msgpack: Encode(non-addressable %T)", v.Interface())
+		return zerror.NewError("msgpack: Encode(non-addressable %T)", v.Interface())
 	}
 	return marshalValue(e, v.Addr())
 }
@@ -163,5 +174,5 @@ func encodeErrorValue(e *Encoder, v reflect.Value) error {
 }
 
 func encodeUnsupportedValue(e *Encoder, v reflect.Value) error {
-	return fmt.Errorf("msgpack: Encode(unsupported %s)", v.Type())
+	return zerror.NewError("msgpack: Encode(unsupported %s)", v.Type())
 }

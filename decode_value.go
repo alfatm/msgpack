@@ -2,8 +2,9 @@ package msgpack
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
+
+	"gitlab.msoft.io/hub/zerror"
 )
 
 var interfaceType = reflect.TypeOf((*interface{})(nil)).Elem()
@@ -11,6 +12,7 @@ var stringType = reflect.TypeOf((*string)(nil)).Elem()
 
 var valueDecoders []decoderFunc
 
+//nolint:gochecknoinits
 func init() {
 	valueDecoders = []decoderFunc{
 		reflect.Bool:          decodeBoolValue,
@@ -43,18 +45,22 @@ func init() {
 
 func mustSet(v reflect.Value) error {
 	if !v.CanSet() {
-		return fmt.Errorf("msgpack: Decode(nonsettable %s)", v.Type())
+		return zerror.NewError("msgpack: Decode(nonsettable %s)", v.Type())
 	}
 	return nil
 }
 
 func getDecoder(typ reflect.Type) decoderFunc {
-	kind := typ.Kind()
-
-	decoder, ok := typDecMap[typ]
-	if ok {
-		return decoder
+	if v, ok := typeDecMap.Load(typ); ok {
+		return v.(decoderFunc)
 	}
+	fn := _getDecoder(typ)
+	typeDecMap.Store(typ, fn)
+	return fn
+}
+
+func _getDecoder(typ reflect.Type) decoderFunc {
+	kind := typ.Kind()
 
 	if typ.Implements(customDecoderType) {
 		return decodeCustomValue
@@ -79,12 +85,10 @@ func getDecoder(typ reflect.Type) decoderFunc {
 		return ptrDecoderFunc(typ)
 	case reflect.Slice:
 		elem := typ.Elem()
-		switch elem.Kind() {
-		case reflect.Uint8:
+		if elem.Kind() == reflect.Uint8 {
 			return decodeBytesValue
 		}
-		switch elem {
-		case stringType:
+		if elem == stringType {
 			return decodeStringSliceValue
 		}
 	case reflect.Array:
@@ -128,7 +132,7 @@ func ptrDecoderFunc(typ reflect.Type) decoderFunc {
 
 func decodeCustomValueAddr(d *Decoder, v reflect.Value) error {
 	if !v.CanAddr() {
-		return fmt.Errorf("msgpack: Decode(nonaddressable %T)", v.Interface())
+		return zerror.NewError("msgpack: Decode(nonaddressable %T)", v.Interface())
 	}
 	return decodeCustomValue(d, v.Addr())
 }
@@ -148,7 +152,7 @@ func decodeCustomValue(d *Decoder, v reflect.Value) error {
 
 func unmarshalValueAddr(d *Decoder, v reflect.Value) error {
 	if !v.CanAddr() {
-		return fmt.Errorf("msgpack: Decode(nonaddressable %T)", v.Interface())
+		return zerror.NewError("msgpack: Decode(nonaddressable %T)", v.Interface())
 	}
 	return unmarshalValue(d, v.Addr())
 }
@@ -171,7 +175,7 @@ func unmarshalValue(d *Decoder, v reflect.Value) error {
 		}
 		d.rec = b
 	} else {
-		d.rec = makeBuffer()
+		d.rec = make([]byte, 0, 64)
 		if err := d.Skip(); err != nil {
 			return err
 		}
@@ -232,5 +236,5 @@ func (d *Decoder) interfaceValue(v reflect.Value) error {
 }
 
 func decodeUnsupportedValue(d *Decoder, v reflect.Value) error {
-	return fmt.Errorf("msgpack: Decode(unsupported %s)", v.Type())
+	return zerror.NewError("msgpack: Decode(unsupported %s)", v.Type())
 }

@@ -2,11 +2,10 @@ package msgpack
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 
-	"github.com/alfatm/msgpack/codes"
-	"github.com/joomcode/errorx"
+	"github.com/vmihailenco/msgpack/v4/codes"
+	"gitlab.msoft.io/hub/zerror"
 )
 
 const mapElemsAllocLimit = 1e4
@@ -49,12 +48,12 @@ func decodeMapValueSize(d *Decoder, v reflect.Value, size int) error {
 	for i := 0; i < size; i++ {
 		mk := reflect.New(keyType).Elem()
 		if err := d.DecodeValue(mk); err != nil {
-			return errorx.Decorate(err, "msgpack:  unable decode map key")
+			return err
 		}
 
 		mv := reflect.New(valueType).Elem()
 		if err := d.DecodeValue(mv); err != nil {
-			return errorx.Decorate(err, "msgpack: unable decode map field `%v`", mk)
+			return err
 		}
 
 		v.SetMapIndex(mk, mv)
@@ -109,7 +108,7 @@ func (d *Decoder) _mapLen(c codes.Code) (int, error) {
 
 func expandInvalidCodeMapLenError(c codes.Code, err error) error {
 	if err == errInvalidCode {
-		return fmt.Errorf("msgpack: invalid code=%x decoding map length", c)
+		return zerror.NewError("msgpack: invalid code=%x decoding map length", c)
 	}
 	return err
 }
@@ -199,7 +198,7 @@ func (d *Decoder) DecodeMap() (interface{}, error) {
 		return nil, nil
 	}
 	if size == 0 {
-		return make(map[string]interface{}), nil
+		return make(map[interface{}]interface{}), nil
 	}
 
 	code, err := d.PeekCode()
@@ -308,7 +307,7 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 				break
 			}
 			if err := f.DecodeValue(d, v); err != nil {
-				return errorx.Decorate(err, "msgpack: unable decode struct `%+v`", v)
+				return err
 			}
 		}
 		// Skip extra values.
@@ -323,15 +322,15 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 	for i := 0; i < n; i++ {
 		name, err := d.DecodeString()
 		if err != nil {
-			return errorx.Decorate(err, "msgpack: unable decode struct name `%+v`", v)
+			return err
 		}
 		if f := fields.Table[name]; f != nil {
 			if err := f.DecodeValue(d, v); err != nil {
-				return errorx.Decorate(err, "msgpack: unable decode struct field `%v` value, `%+v`", name, v)
+				return err
 			}
 		} else {
 			if d.disallowUnknownFields {
-				return errorx.IllegalFormat.New("msgpack: unknown field `%v` of struct %#+v", name, v)
+				return zerror.NewError("msgpack: unknown field %q of struct %#+v", name, v)
 			}
 			if err := d.Skip(); err != nil {
 				return err

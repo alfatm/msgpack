@@ -2,18 +2,19 @@ package msgpack
 
 import (
 	"encoding/binary"
-	"fmt"
 	"reflect"
 	"time"
 
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
+	"gitlab.msoft.io/hub/zerror"
 )
 
-var timeExtId int8 = -1
+var timeExtID int8 = -1
 
+//nolint:gochecknoinits
 func init() {
 	timeType := reflect.TypeOf((*time.Time)(nil)).Elem()
-	registerExt(timeExtId, timeType, encodeTimeValue, decodeTimeValue)
+	registerExt(timeExtID, timeType, encodeTimeValue, decodeTimeValue)
 }
 
 func (e *Encoder) EncodeTime(tm time.Time) error {
@@ -21,30 +22,33 @@ func (e *Encoder) EncodeTime(tm time.Time) error {
 	if err := e.encodeExtLen(len(b)); err != nil {
 		return err
 	}
-	if err := e.w.WriteByte(byte(timeExtId)); err != nil {
+	if err := e.w.WriteByte(byte(timeExtID)); err != nil {
 		return err
 	}
 	return e.write(b)
 }
 
 func (e *Encoder) encodeTime(tm time.Time) []byte {
+	if e.timeBuf == nil {
+		e.timeBuf = make([]byte, 12)
+	}
+
 	secs := uint64(tm.Unix())
 	if secs>>34 == 0 {
 		data := uint64(tm.Nanosecond())<<34 | secs
 		if data&0xffffffff00000000 == 0 {
-			b := make([]byte, 4)
+			b := e.timeBuf[:4]
 			binary.BigEndian.PutUint32(b, uint32(data))
 			return b
-		} else {
-			b := make([]byte, 8)
-			binary.BigEndian.PutUint64(b, data)
-			return b
 		}
+		b := e.timeBuf[:8]
+		binary.BigEndian.PutUint64(b, data)
+		return b
 	}
 
-	b := make([]byte, 12)
+	b := e.timeBuf[:12]
 	binary.BigEndian.PutUint32(b, uint32(tm.Nanosecond()))
-	binary.BigEndian.PutUint64(b[4:], uint64(secs))
+	binary.BigEndian.PutUint64(b[4:], secs)
 	return b
 }
 
@@ -124,7 +128,7 @@ func (d *Decoder) decodeTime() (time.Time, error) {
 		sec := binary.BigEndian.Uint64(b[4:])
 		return time.Unix(int64(sec), int64(nsec)), nil
 	default:
-		err = fmt.Errorf("msgpack: invalid ext len=%d decoding time", extLen)
+		err = zerror.NewError("msgpack: invalid ext len=%d decoding time", extLen)
 		return time.Time{}, err
 	}
 }

@@ -1,4 +1,4 @@
-## 3.4
+## v4
 
 - Encode, Decode, Marshal, and Unmarshal are changed to accept single argument. EncodeMulti and DecodeMulti are added as replacement.
 - Added EncodeInt8/16/32/64 and EncodeUint8/16/32/64.
@@ -14,7 +14,7 @@
 
 ## v3
 
-- gopkg.in is not supported any more. Update import path to github.com/alfatm/msgpack.
+- gopkg.in is not supported any more. Update import path to github.com/vmihailenco/msgpack.
 - Msgpack maps are decoded into map[string]interface{} by default.
 - EncodeSliceLen is removed in favor of EncodeArrayLen. DecodeSliceLen is removed in favor of DecodeArrayLen.
 - Embedded structs are automatically inlined where possible.

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alfatm/msgpack"
+	"github.com/vmihailenco/msgpack/v4"
 )
 
 func BenchmarkDiscard(b *testing.B) {
@@ -220,7 +220,7 @@ func structForBenchmark2() *benchmarkStruct2 {
 	}
 }
 
-func BenchmarkStructalfatmMsgpack(b *testing.B) {
+func BenchmarkStructVmihailencoMsgpack(b *testing.B) {
 	in := structForBenchmark()
 	out := new(benchmarkStruct)
 
@@ -338,7 +338,7 @@ func BenchmarkQuery(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		if values[0].(int8) != 10 {
+		if values[0].(int64) != 10 {
 			b.Fatalf("%v != %d", values[0], 10)
 		}
 	}

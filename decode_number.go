@@ -1,11 +1,11 @@
 package msgpack
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
+	"gitlab.msoft.io/hub/zerror"
 )
 
 func (d *Decoder) skipN(n int) error {
@@ -116,7 +116,7 @@ func (d *Decoder) uint(c codes.Code) (uint64, error) {
 	case codes.Uint64, codes.Int64:
 		return d.uint64()
 	}
-	return 0, fmt.Errorf("msgpack: invalid code=%x decoding uint64", c)
+	return 0, zerror.NewError("msgpack: invalid code=%x decoding uint64", c)
 }
 
 // DecodeInt64 decodes msgpack int8/16/32/64 and uint8/16/32/64
@@ -159,7 +159,7 @@ func (d *Decoder) int(c codes.Code) (int64, error) {
 		n, err := d.uint64()
 		return int64(n), err
 	}
-	return 0, fmt.Errorf("msgpack: invalid code=%x decoding int64", c)
+	return 0, zerror.NewError("msgpack: invalid code=%x decoding int64", c)
 }
 
 func (d *Decoder) DecodeFloat32() (float32, error) {
@@ -181,7 +181,7 @@ func (d *Decoder) float32(c codes.Code) (float32, error) {
 
 	n, err := d.int(c)
 	if err != nil {
-		return 0, fmt.Errorf("msgpack: invalid code=%x decoding float32", c)
+		return 0, zerror.NewError("msgpack: invalid code=%x decoding float32", c)
 	}
 	return float32(n), nil
 }
@@ -213,7 +213,7 @@ func (d *Decoder) float64(c codes.Code) (float64, error) {
 
 	n, err := d.int(c)
 	if err != nil {
-		return 0, fmt.Errorf("msgpack: invalid code=%x decoding float32", c)
+		return 0, zerror.NewError("msgpack: invalid code=%x decoding float32", c)
 	}
 	return float64(n), nil
 }

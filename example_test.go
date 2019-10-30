@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/alfatm/msgpack"
+	"github.com/vmihailenco/msgpack/v4"
 )
 
 func ExampleMarshal() {

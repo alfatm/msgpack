@@ -1,10 +1,10 @@
 package msgpack
 
 import (
-	"fmt"
 	"reflect"
 
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
+	"gitlab.msoft.io/hub/zerror"
 )
 
 func (d *Decoder) bytesLen(c codes.Code) (int, error) {
@@ -24,7 +24,7 @@ func (d *Decoder) bytesLen(c codes.Code) (int, error) {
 		n, err := d.uint32()
 		return int(n), err
 	}
-	return 0, fmt.Errorf("msgpack: invalid code=%x decoding bytes length", c)
+	return 0, zerror.NewError("msgpack: invalid code=%x decoding bytes length", c)
 }
 
 func (d *Decoder) DecodeString() (string, error) {
@@ -167,7 +167,7 @@ func decodeByteArrayValue(d *Decoder, v reflect.Value) error {
 		return nil
 	}
 	if n > v.Len() {
-		return fmt.Errorf("%s len is %d, but msgpack has %d elements", v.Type(), v.Len(), n)
+		return zerror.NewError("%s len is %d, but msgpack has %d elements", v.Type(), v.Len(), n)
 	}
 
 	b := v.Slice(0, n).Bytes()

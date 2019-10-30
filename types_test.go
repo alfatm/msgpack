@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alfatm/msgpack"
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4"
+	"github.com/vmihailenco/msgpack/v4/codes"
 )
 
 //------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ var _ msgpack.CustomDecoder = (*IntSet)(nil)
 
 func (set IntSet) EncodeMsgpack(enc *msgpack.Encoder) error {
 	slice := make([]int, 0, len(set))
-	for n, _ := range set {
+	for n := range set {
 		slice = append(slice, n)
 	}
 	return enc.Encode(slice)
@@ -345,7 +345,7 @@ func (t *typeTest) assertErr(err error, s string) {
 
 var (
 	intSlice   = make([]int, 0, 3)
-	repoURL, _ = url.Parse("https://github.com/alfatm/msgpack")
+	repoURL, _ = url.Parse("https://github.com/vmihailenco/msgpack")
 	typeTests  = []typeTest{
 		{in: make(chan bool), encErr: "msgpack: Encode(unsupported chan bool)"},
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alfatm/msgpack"
+	"github.com/vmihailenco/msgpack/v4"
 )
 
 func init() {
@@ -29,7 +29,7 @@ func (tm *EventTime) MarshalMsgpack() ([]byte, error) {
 
 func (tm *EventTime) UnmarshalMsgpack(b []byte) error {
 	if len(b) != 8 {
-		return fmt.Errorf("invalid data length: got %d, wanted 8", len(b))
+		return zerror.NewError("invalid data length: got %d, wanted 8", len(b))
 	}
 	sec := binary.BigEndian.Uint32(b)
 	usec := binary.BigEndian.Uint32(b[4:])

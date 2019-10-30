@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
 )
 
 type writer interface {
@@ -50,8 +50,15 @@ func Marshal(v interface{}) ([]byte, error) {
 }
 
 type Encoder struct {
-	w   writer
+	w writer
+
 	buf []byte
+	// timeBuf is lazily allocated in encodeTime() to
+	// avoid allocations when time.Time value are encoded
+	//
+	// buf can't be reused for time encoding, as buf is used
+	// to encode msgpack extLen
+	timeBuf []byte
 
 	sortMapKeys   bool
 	structAsArray bool

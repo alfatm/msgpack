@@ -3,16 +3,13 @@ package msgpack
 import (
 	"bufio"
 	"bytes"
-	"errors"
-	"fmt"
 	"io"
 	"reflect"
 	"time"
 
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
+	"gitlab.msoft.io/hub/zerror"
 )
-
-const bytesAllocLimit = 1024 * 1024 // 1mb
 
 type bufReader interface {
 	io.Reader
@@ -24,10 +21,6 @@ func newBufReader(r io.Reader) bufReader {
 		return br
 	}
 	return bufio.NewReader(r)
-}
-
-func makeBuffer() []byte {
-	return make([]byte, 0, 64)
 }
 
 // Unmarshal decodes the MessagePack-encoded data and stores the result
@@ -57,9 +50,7 @@ type Decoder struct {
 // beyond the MessagePack values requested. Buffering can be disabled
 // by passing a reader that implements io.ByteScanner interface.
 func NewDecoder(r io.Reader) *Decoder {
-	d := &Decoder{
-		buf: makeBuffer(),
-	}
+	d := new(Decoder)
 	d.resetReader(r)
 	return d
 }
@@ -101,6 +92,7 @@ func (d *Decoder) resetReader(r io.Reader) {
 	d.s = reader
 }
 
+//nolint:gocyclo
 func (d *Decoder) Decode(v interface{}) error {
 	var err error
 	switch v := v.(type) {
@@ -199,14 +191,14 @@ func (d *Decoder) Decode(v interface{}) error {
 
 	vv := reflect.ValueOf(v)
 	if !vv.IsValid() {
-		return errors.New("msgpack: Decode(nil)")
+		return zerror.NewError("msgpack: Decode(nil)")
 	}
 	if vv.Kind() != reflect.Ptr {
-		return fmt.Errorf("msgpack: Decode(nonsettable %T)", v)
+		return zerror.NewError("msgpack: Decode(nonsettable %T)", v)
 	}
 	vv = vv.Elem()
 	if !vv.IsValid() {
-		return fmt.Errorf("msgpack: Decode(nonsettable %T)", v)
+		return zerror.NewError("msgpack: Decode(nonsettable %T)", v)
 	}
 	return d.DecodeValue(vv)
 }
@@ -238,7 +230,7 @@ func (d *Decoder) DecodeNil() error {
 		return err
 	}
 	if c != codes.Nil {
-		return fmt.Errorf("msgpack: invalid code=%x decoding nil", c)
+		return zerror.NewError("msgpack: invalid code=%x decoding nil", c)
 	}
 	return nil
 }
@@ -270,7 +262,7 @@ func (d *Decoder) bool(c codes.Code) (bool, error) {
 	if c == codes.True {
 		return true, nil
 	}
-	return false, fmt.Errorf("msgpack: invalid code=%x decoding bool", c)
+	return false, zerror.NewError("msgpack: invalid code=%x decoding bool", c)
 }
 
 // DecodeInterface decodes value into interface. It returns following types:
@@ -352,7 +344,7 @@ func (d *Decoder) DecodeInterface() (interface{}, error) {
 		return d.extInterface(c)
 	}
 
-	return 0, fmt.Errorf("msgpack: unknown code %x decoding interface{}", c)
+	return 0, zerror.NewError("msgpack: unknown code %x decoding interface{}", c)
 }
 
 // DecodeInterfaceLoose is like DecodeInterface except that:
@@ -366,7 +358,7 @@ func (d *Decoder) DecodeInterfaceLoose() (interface{}, error) {
 	}
 
 	if codes.IsFixedNum(c) {
-		return int64(c), nil
+		return int64(int8(c)), nil
 	}
 	if codes.IsFixedMap(c) {
 		err = d.s.UnreadByte()
@@ -410,7 +402,7 @@ func (d *Decoder) DecodeInterfaceLoose() (interface{}, error) {
 		return d.extInterface(c)
 	}
 
-	return 0, fmt.Errorf("msgpack: unknown code %x decoding interface{}", c)
+	return 0, zerror.NewError("msgpack: unknown code %x decoding interface{}", c)
 }
 
 // Skip skips next value.
@@ -422,11 +414,14 @@ func (d *Decoder) Skip() error {
 
 	if codes.IsFixedNum(c) {
 		return nil
-	} else if codes.IsFixedMap(c) {
+	}
+	if codes.IsFixedMap(c) {
 		return d.skipMap(c)
-	} else if codes.IsFixedArray(c) {
+	}
+	if codes.IsFixedArray(c) {
 		return d.skipSlice(c)
-	} else if codes.IsFixedString(c) {
+	}
+	if codes.IsFixedString(c) {
 		return d.skipBytes(c)
 	}
 
@@ -454,7 +449,7 @@ func (d *Decoder) Skip() error {
 		return d.skipExt(c)
 	}
 
-	return fmt.Errorf("msgpack: unknown code %x", c)
+	return zerror.NewError("msgpack: unknown code %x", c)
 }
 
 // PeekCode returns the next MessagePack code without advancing the reader.
@@ -502,20 +497,26 @@ func (d *Decoder) readN(n int) ([]byte, error) {
 	}
 	d.buf = buf
 	if d.rec != nil {
+		//TODO: read directly into d.rec?
 		d.rec = append(d.rec, buf...)
 	}
 	return buf, nil
 }
 
 func readN(r io.Reader, b []byte, n int) ([]byte, error) {
+	const bytesAllocLimit = 1024 * 1024 // 1mb
+
 	if b == nil {
 		if n == 0 {
 			return make([]byte, 0), nil
 		}
-		if n <= bytesAllocLimit {
-			b = make([]byte, n)
-		} else {
-			b = make([]byte, bytesAllocLimit)
+		switch {
+		case n < 64:
+			b = make([]byte, 0, 64)
+		case n <= bytesAllocLimit:
+			b = make([]byte, 0, n)
+		default:
+			b = make([]byte, 0, bytesAllocLimit)
 		}
 	}
 
@@ -548,7 +549,7 @@ func readN(r io.Reader, b []byte, n int) ([]byte, error) {
 	return b, nil
 }
 
-func min(a, b int) int {
+func min(a, b int) int { //nolint:unparam
 	if a <= b {
 		return a
 	}

@@ -1,11 +1,11 @@
 package msgpack
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/alfatm/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
+	"gitlab.msoft.io/hub/zerror"
 )
 
 type queryResult struct {
@@ -62,7 +62,7 @@ func (d *Decoder) query(q *queryResult) error {
 	case code == codes.Array16 || code == codes.Array32 || codes.IsFixedArray(code):
 		err = d.queryArrayIndex(q)
 	default:
-		err = fmt.Errorf("msgpack: unsupported code=%x decoding key=%q", code, q.key)
+		err = zerror.NewError("msgpack: unsupported code=%x decoding key=%q", code, q.key)
 	}
 	return err
 }

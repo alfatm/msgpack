@@ -12,7 +12,7 @@ import (
 
 	. "gopkg.in/check.v1"
 
-	"github.com/alfatm/msgpack"
+	"github.com/vmihailenco/msgpack/v4"
 )
 
 type nameStruct struct {
@@ -343,12 +343,13 @@ func TestSortMapKeys(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		mapIntPFooMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
-		t.Logf("map[int]*Foo got md5 value: %q\n", mapIntPFooMd5)
+		want := "7e252d542e3f72b82f9ee84dfd150f90"
+		got := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
+		t.Logf("map[int]*Foo got md5 value: %q\n", got)
 
 		// must be consisten on every encoding
-		if mapIntPFooMd5 != "7e252d542e3f72b82f9ee84dfd150f90" {
-			t.Fatalf("map[int]*Foo inconsistent encoding, sample not match")
+		if got != want {
+			t.Fatalf("map[int]*Foo inconsistent encoding, sample not match, %v != %v", got, want)
 		}
 
 		// decode
@@ -382,12 +383,13 @@ func TestSortMapKeys(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		mapInt64FooMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
-		t.Logf("map[int64]Foo got md5 value: %q\n", mapInt64FooMd5)
+		want := "7e252d542e3f72b82f9ee84dfd150f90"
+		got := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
+		t.Logf("map[int64]Foo got md5 value: %q\n", got)
 
 		// must be consisten on every encoding
-		if mapInt64FooMd5 != "7e252d542e3f72b82f9ee84dfd150f90" {
-			t.Fatalf("map[int64]Foo inconsistent encoding, sample not match")
+		if got != want {
+			t.Fatalf("map[int64]Foo inconsistent encoding, sample not match, %v != %v", got, want)
 		}
 	}
 
@@ -407,40 +409,13 @@ func TestSortMapKeys(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		mapIIMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
-		t.Logf("map[interface{}]interface{} got md5 value: %q\n", mapIIMd5)
+		want := "8aeffbc24293bb09cd23901ae3d57ba7"
+		got := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
+		t.Logf("map[interface{}]interface{} got md5 value: %q\n", got)
 
 		// must be consisten on every encoding
-		if mapIIMd5 != "8aeffbc24293bb09cd23901ae3d57ba7" {
-			t.Fatalf("map[interface{}]interface{} inconsistent encoding, sample not match")
-		}
-	}
-
-	// pointer keys
-	{
-		one := 42
-		two := "foo"
-		three := 3.14
-		mapII := map[interface{}]interface{}{
-			&three: "pi",
-			&two:   "bar",
-			&one:   "meaning of live",
-		}
-
-		var buf bytes.Buffer
-		enc := msgpack.NewEncoder(&buf)
-		enc = enc.SortMapKeys(true)
-		err := enc.Encode(&mapII)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		mapIIMd5 := fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
-		t.Logf("map[*pointer]interface{} got md5 value: %q\n", mapIIMd5)
-
-		// must be consisten on every encoding
-		if mapIIMd5 != "651db09377bbb40387a3d74e2e1c47c9" {
-			t.Fatalf("map[*pointer]interface{} inconsistent encoding, sample not match")
+		if got != want {
+			t.Fatalf("map[interface{}]interface{} inconsistent encoding, sample not match, %v != %v", got, want)
 		}
 	}
 }
