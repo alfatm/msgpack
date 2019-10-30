@@ -1,4 +1,4 @@
-module github.com/alfatm/msgpack
+module github.com/alfatm/msgpack/v4
 
 require (
 	github.com/kr/pretty v0.1.0 // indirect
