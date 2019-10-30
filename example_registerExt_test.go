@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/vmihailenco/msgpack/v4"
+	"gitlab.msoft.io/hub/zerror"
 )
 
 func init() {
