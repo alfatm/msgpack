@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alfatm/msgpack/v4"
+	"github.com/vmihailenco/msgpack/v4"
 	"gitlab.msoft.io/hub/zerror"
 )
 

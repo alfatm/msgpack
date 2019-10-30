@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alfatm/msgpack/v4/codes"
+	"github.com/vmihailenco/msgpack/v4/codes"
 	"gitlab.msoft.io/hub/zerror"
 )
 

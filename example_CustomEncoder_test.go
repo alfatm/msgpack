@@ -3,7 +3,7 @@ package msgpack_test
 import (
 	"fmt"
 
-	"github.com/alfatm/msgpack/v4"
+	"github.com/vmihailenco/msgpack/v4"
 )
 
 type customStruct struct {
