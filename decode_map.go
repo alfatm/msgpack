@@ -327,7 +327,7 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 		if f := fields.Table[name]; f != nil {
 			if err := f.DecodeValue(d, v); err != nil {
 				val := reflect.Indirect(f.value(v))
-				if val.Kind() == reflect.Struct {
+				if val.Kind() == reflect.Struct || val.Kind() == reflect.Slice {
 					return zerror.Decorate(err, "unable decode struct field `%v` value (%+v)", name, val.Type())
 				}
 				return zerror.Decorate(err, "unable decode struct field `%v` value (%+v)", name, val)
