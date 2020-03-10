@@ -330,7 +330,7 @@ func decodeStructValue(d *Decoder, v reflect.Value) error {
 			}
 		} else {
 			if d.disallowUnknownFields {
-				return zerror.NewError("msgpack: unknown field %q of struct %#+v", name, v)
+				return zerror.NewError("msgpack: unknown field %q of struct %v", name, v)
 			}
 			if err := d.Skip(); err != nil {
 				return zerror.Decorate(err, "unable scip field %v", name)
